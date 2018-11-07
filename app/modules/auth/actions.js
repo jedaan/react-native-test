@@ -148,3 +148,28 @@ export function checkLoginStatus(callback) {
         });
     };
 }
+
+export function signInWithFacebook(fbToken) {
+    return (dispatch) => {
+        return new Promise((resolve, reject) => {
+            const credential = provider.credential(fbToken);
+            auth.signInWithCredential(credential)
+                .then((user) => {
+                    //Get the user object from the realtime database
+                    database.ref('users').child(user.uid).once('value')
+                        .then((snapshot) => {
+
+                            const exists = (snapshot.val() !== null);
+
+                            //if the user exist in the DB, replace the user variable with the returned snapshot
+                            if (exists) user = snapshot.val();
+
+                            if (exists) dispatch({type: t.LOGGED_IN, user});
+                            resolve({exists, user});
+                        })
+                        .catch((error) => reject(error));
+                })
+                .catch((error) => reject(error));
+        });
+    }
+}

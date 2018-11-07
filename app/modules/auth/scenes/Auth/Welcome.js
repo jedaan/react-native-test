@@ -5,12 +5,33 @@ import {Button, SocialIcon, Divider} from 'react-native-elements'
 import {Actions} from 'react-native-router-flux'
 import {connect} from 'react-redux';
 
-import {actions as auth} from "../../index"
-const {} = auth;
+import {Facebook} from 'expo';
+
+import {actions as auth, constants as c} from "../../index"
+
+const {signInWithFacebook} = auth;
 
 import styles from "./styles"
 
 class Welcome extends React.Component {
+    //get users permission authorization (ret: facebook token)
+    onSignInWithFacebook =  async () => {
+        const options = {permissions: ['public_profile', 'email'],}
+        const {type, token} = await Facebook.logInWithReadPermissionsAsync(c.FACEBOOK_APP_ID, options);
+
+        console.log(type)
+        console.log(token)
+
+        if (type === 'success') {
+            this.props.signInWithFacebook(token)
+                .then(({exists, user}) => {
+                    if (exists) Actions.Main()
+                    else Actions.CompleteProfile({user})
+                })
+                .catch((error) => alert(error.message))
+        }
+    }
+
     render() {
         return (
             <View style={styles.container}>
@@ -66,4 +87,4 @@ class Welcome extends React.Component {
 }
 
 
-export default connect(null, {})(Welcome);
+export default connect(null, {signInWithFacebook})(Welcome);
